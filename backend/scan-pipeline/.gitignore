@@ -6,3 +6,4 @@ dist/
 *.pem
 *.key
 service-account*.json
+credentials/
