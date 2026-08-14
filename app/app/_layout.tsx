@@ -4,12 +4,24 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Palette } from '@/constants/theme';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const navigationTheme = {
+    ...(colorScheme === 'dark' ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(colorScheme === 'dark' ? DarkTheme.colors : DefaultTheme.colors),
+      background: Palette.olive,
+      border: Palette.olive,
+      card: Palette.olive,
+      primary: Palette.lemon,
+      text: Palette.cream,
+    },
+  };
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={navigationTheme}>
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="personalize" options={{ headerShown: false }} />
