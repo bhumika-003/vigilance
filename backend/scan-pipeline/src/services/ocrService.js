@@ -8,8 +8,17 @@ function extractText(imagePath) {
       "../ocr/paddle_ocr.py"
     );
 
+    const pythonPath = path.join(
+      process.cwd(),
+      ".venv/bin/python3"
+    );
+
+    console.log("Using Python:", pythonPath);
+    console.log("Using OCR script:", scriptPath);
+
     const python = spawn(
-path.join(__dirname, "../../../.venv/bin/python"),      [scriptPath, imagePath]
+      pythonPath,
+      [scriptPath, imagePath]
     );
 
     let output = "";
@@ -25,11 +34,19 @@ path.join(__dirname, "../../../.venv/bin/python"),      [scriptPath, imagePath]
 
     python.on("close", (code) => {
       if (code !== 0) {
-        reject(new Error(error || `PaddleOCR exited with code ${code}`));
+        reject(
+          new Error(
+            error || `PaddleOCR exited with code ${code}`
+          )
+        );
         return;
       }
 
       resolve(output.trim());
+    });
+
+    python.on("error", (err) => {
+      reject(err);
     });
   });
 }
