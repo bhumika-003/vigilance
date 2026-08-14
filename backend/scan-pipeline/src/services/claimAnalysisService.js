@@ -1,147 +1,110 @@
 require("dotenv").config();
 
-const OpenAI = require("openai");
+const { GoogleGenAI } = require("@google/genai");
 
-const client = new OpenAI({
-  baseURL: "https://openrouter.ai/api/v1",
-  apiKey: process.env.OPENROUTER_API_KEY,
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
 });
 
 async function analyzeClaims(text) {
-  const response = await client.chat.completions.create({
-    model: "openai/gpt-oss-20b:free",
+  const prompt = `
+Extract all potentially verifiable factual claims from the OCR text below.
 
-    messages: [
-      {
-        role: "system",
-        content: `
-You are a Media and Information Literacy assistant.
-
-Your job is to help people THINK before they believe or share information.
-
-Analyze the provided text and identify factual claims that can be verified.
-
-For each claim:
-1. Give the claim.
-2. Give a cautious initial verdict:
-   - "needs_verification"
-   - "likely_true"
-   - "likely_false"
-   - "misleading"
-3. Explain briefly why the user should investigate it.
-4. Give 2-3 practical verification steps.
-5. Select ONE fact-checking tactic from:
-   - "Lateral Reading"
-   - "Source Tracing"
-   - "Context Check"
-   - "Source Check"
-   - "Evidence Check"
-   - "Image Verification"
-   - "Emotional Check"
-   - "Corroboration"
+OCR may contain spelling mistakes, missing words, duplicated words, or distorted text.
+Infer the intended wording only when the meaning is clear.
 
 IMPORTANT:
-- Do NOT claim something is definitely true or false without evidence.
-- The initial verdict is only a preliminary assessment.
-- Do NOT invent sources.
-- Make the verification steps actionable.
-- Make the language engaging and encouraging.
-- The goal is to teach the user how to verify information themselves.
+Preserve the COMPLETE meaning and context of each claim.
 
-Return ONLY valid JSON.
-        `,
-      },
-      {
-        role: "user",
-        content: text,
-      },
-    ],
+Do not shorten or oversimplify a factual headline.
+Keep important:
+- organizations
+- people
+- locations
+- actions
+- numbers
+- dates
+- causes
+- relationships
+- outcomes
+- comparisons
+- qualifiers
 
-    response_format: {
-      type: "json_schema",
-      json_schema: {
-        name: "claim_analysis",
-        strict: true,
-        schema: {
-          type: "object",
-          properties: {
-            claims: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  claim: {
-                    type: "string",
-                  },
-                  initialVerdict: {
-                    type: "string",
-                    enum: [
-                      "needs_verification",
-                      "likely_true",
-                      "likely_false",
-                      "misleading",
-                    ],
-                  },
-                  reason: {
-                    type: "string",
-                  },
-                  verificationSteps: {
-                    type: "array",
-                    items: {
-                      type: "string",
-                    },
-                  },
-                  tactic: {
-                    type: "object",
-                    properties: {
-                      name: {
-                        type: "string",
-                      },
-                      explanation: {
-                        type: "string",
-                      },
-                    },
-                    required: ["name", "explanation"],
-                    additionalProperties: false,
-                  },
-                },
-                required: [
-                  "claim",
-                  "initialVerdict",
-                  "reason",
-                  "verificationSteps",
-                  "tactic",
-                ],
-                additionalProperties: false,
-              },
-            },
-          },
-          required: ["claims"],
-          additionalProperties: false,
-        },
-      },
-    },
+For example:
+
+OCR:
+"SpiceJet laps up overseas routes vacated by Jet Airways, to fly to 7 new cities"
+
+GOOD:
+"SpiceJet planned to fly to seven new cities on overseas routes vacated by Jet Airways."
+
+BAD:
+"SpiceJet is planning to fly to seven new cities."
+
+The BAD version loses the important context about Jet Airways and the routes.
+
+Include:
+- factual statements
+- events
+- people or organizations
+- actions
+- numbers
+- dates
+- outcomes
+- factual news headlines
+
+Do NOT include:
+- timestamps
+- page numbers
+- rankings
+- section labels
+- publication names
+- website URLs
+- navigation text
+- opinions
+- ambiguous text
+
+If something is too unclear to confidently determine, do not invent or guess it.
+
+Each independently verifiable claim should be a separate object.
+
+Return ONLY valid JSON in this exact format:
+
+{
+  "claims": [
+    {
+      "claim": "Complete factual claim"
+    }
+  ]
+}
+
+OCR TEXT:
+${text}
+`;
+
+  const response = await ai.models.generateContent({
+    model: "gemini-3.1-flash-lite",
+    contents: prompt,
   });
 
-let content = response.choices[0].message.content.trim();
+  let content = response.text.trim();
 
-if (content.startsWith("```")) {
-  content = content
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/\s*```$/, "")
-    .trim();
-}
+  console.log("=== GEMINI ANALYSIS ===");
+  console.log(content);
 
-const parsed = JSON.parse(content);
+  if (content.startsWith("```")) {
+    content = content
+      .replace(/^```json\s*/i, "")
+      .replace(/^```\s*/i, "")
+      .replace(/\s*```$/, "")
+      .trim();
+  }
 
-if (Array.isArray(parsed)) {
+  const parsed = JSON.parse(content);
+
   return {
-    claims: parsed,
+    claims: Array.isArray(parsed.claims) ? parsed.claims : [],
   };
-}
-
-return parsed;
 }
 
 module.exports = {

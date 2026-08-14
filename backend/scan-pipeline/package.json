@@ -2,12 +2,13 @@
   "name": "vigilance-scan-pipeline",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "start": "tsx src/server.ts",
-    "typecheck": "tsc --noEmit",
-    "test": "tsx --test test/**/*.test.ts"
-  },
+ "scripts": {
+  "dev": "tsx watch src/server.ts",
+  "start": "tsx src/server.ts",
+  "build": "tsc && mkdir -p dist/src/ocr && cp src/ocr/paddle_ocr.py dist/src/ocr/paddle_ocr.py",
+  "typecheck": "tsc --noEmit",
+  "test": "tsx --test test/**/*.test.ts"
+},
   "dependencies": {
     "@google-cloud/vision": "^6.0.0",
     "@google/genai": "^2.17.0",
@@ -16,7 +17,8 @@
     "dotenv": "^17.4.2",
     "express": "^5.1.0",
     "multer": "^2.2.0",
-    "openai": "^7.4.0"
+    "openai": "^7.4.0",
+    "paddleocr": "^1.2.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
