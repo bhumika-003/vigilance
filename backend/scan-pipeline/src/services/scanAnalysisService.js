@@ -42,8 +42,18 @@ async function analyzeScan(imagePath) {
 
       // Get evidence from Google Fact Check API
       // and Web Search fallback
-      const evidence = await factCheckClaim(claim.claim);
+console.log("Starting fact check...");
 
+const evidence = await factCheckClaim(claim.claim);
+
+console.log(
+  "Fact check completed:",
+  evidence.source,
+  evidence.results?.length || 0,
+  "results"
+);
+
+console.log("Starting Gemini verdict evaluation...");
 
       // Step 4: Ask Gemini to evaluate the evidence
       const verdict = await evaluateClaim(

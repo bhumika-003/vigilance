@@ -8,7 +8,7 @@ const ai = new GoogleGenAI({
 
 async function evaluateClaim(claim, evidence) {
   const prompt = `
-You are a careful fact-checking evaluator.
+You are a careful fact-checking evaluator for a Media and Information Literacy (MIL) application.
 
 Your job is to evaluate the CLAIM using ONLY the provided EVIDENCE.
 
@@ -35,7 +35,42 @@ Rules:
 11. Prefer reliable and authoritative sources when evaluating evidence.
 12. Do not treat the number of sources alone as proof of correctness.
 
-Return ONLY valid JSON:
+---
+
+MIL TACTIC
+
+After evaluating the claim, identify the SINGLE most useful Media and Information Literacy tactic that a user could learn from this claim.
+
+Choose EXACTLY ONE tactic from this list:
+
+- source_sleuth
+- evidence_check
+- lateral_reading
+- context_check
+- causation_check
+- confirmation_check
+- emotion_radar
+- persuasion_xray
+- framing_check
+- data_detective
+
+DO NOT invent another tactic.
+
+The tactic should represent a real verification technique that helps the user independently evaluate similar information in the future.
+
+For the selected tactic provide:
+
+- id: one of the allowed tactic IDs above
+- name: a short human-readable name
+- description: one short explanation of the technique
+- steps: exactly 3 practical steps the user can follow
+- whatToLookFor: one short explanation of the warning sign or thing the user should pay attention to
+
+Keep the instructions practical and understandable to a normal app user.
+
+---
+
+Return ONLY valid JSON.
 
 {
   "verdict": "TRUE",
@@ -43,7 +78,18 @@ Return ONLY valid JSON:
   "reason": "...",
   "evidenceQuality": "HIGH",
   "conflictingEvidence": false,
-  "supportingSources": []
+  "supportingSources": [],
+  "milTactic": {
+    "id": "source_sleuth",
+    "name": "Source Sleuth",
+    "description": "Trace a claim back to its original source before trusting it.",
+    "steps": [
+      "Find the original source.",
+      "Check what the source actually says.",
+      "Compare it with the claim being shared."
+    ],
+    "whatToLookFor": "Watch for claims that remove or change the original source's context."
+  }
 }
 
 Allowed verdicts:
@@ -72,12 +118,13 @@ confidence must be a number between 0 and 1.
 
   if (content.startsWith("```")) {
     content = content
-      .replace(/^```json\s*/i, "")
-      .replace(/^```\s*/i, "")
-      .replace(/\s*```$/, "")
+      .replace(/^```json\\s*/i, "")
+      .replace(/^```\\s*/i, "")
+      .replace(/\\s*```$/, "")
       .trim();
   }
-
+console.log("\n=== VERDICT + MIL TACTIC ===");
+console.log(content);
   return JSON.parse(content);
 }
 

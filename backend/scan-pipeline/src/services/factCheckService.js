@@ -61,12 +61,16 @@ async function factCheckClaim(claim) {
 
 async function webSearchFallback(claim) {
   try {
-    const webResults = await searchForEvidence(claim);
+  console.log("Starting Tavily search...");
 
-    return {
-      source: "web_search",
-      results: webResults,
-    };
+const webResults = await searchForEvidence(claim);
+
+console.log("Tavily returned:", webResults.length, "results");
+
+return {
+  source: "web_search",
+  results: webResults,
+};
   } catch (error) {
     console.error("Web search fallback failed:", error.message);
 
