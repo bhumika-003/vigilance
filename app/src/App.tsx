@@ -455,7 +455,11 @@ function InterrogationScene() {
         ========================== */}
 
         {caseTransition && (
-          <CaseTransition />
+          <CaseTransition
+            active={caseTransition}
+            caseNumber={currentCase.caseNumber}
+            title={currentCase.claimText}
+          />
         )}
 
       </View>
