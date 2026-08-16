@@ -1,1150 +1,478 @@
+import React, { useState } from 'react';
 import {
-  useLocalSearchParams,
-  useRouter,
-} from 'expo-router';import { useEffect, useState } from 'react';
-import {
-  Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
+  TouchableOpacity,
+  ScrollView,
+  SafeAreaView,
 } from 'react-native';
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
+import { router } from 'expo-router';
 
-import {
-  causalCourtCases,
-  type CausalCourtCase,
-} from '@/data/causalCourtCases';
+type GameStage = 'LANDING' | 'CASE_PRESENTATION' | 'ANALYSIS' | 'VERDICT';
 
-const COLORS = {
-  forest: '#294C35',
-  forestDark: '#1E3526',
+interface CaseOption {
+  id: string;
+  label: string;
+  isCorrect: boolean;
+  explanation: string;
+}
 
-  ink: '#171B18',
+interface CaseData {
+  headline: string;
+  premise: string;
+  options: CaseOption[];
+  verdictSummary: string;
+}
 
-  parchment: '#E8DCC2',
-  parchmentLight: '#EEEADF',
-  parchmentShadow: '#8D8A82',
-
-  walnut: '#704A35',
-  oak: '#A8754F',
-
-  gold: '#C6A65B',
-
-  white: '#F4EBDD',
+const MOCK_CASE: CaseData = {
+  headline: '"Students who sleep more get better grades!" says the study.',
+  premise: 'Whoa — so more sleep causes better grades? Or maybe students who manage their time well both sleep more and study smarter — the headline never says which.',
+  options: [
+    {
+      id: '1',
+      label: 'Direct Causation: Sleeping directly boosts brain power.',
+      isCorrect: false,
+      explanation: 'Over-simplifies the relation without controlling for confounding variables.',
+    },
+    {
+      id: '2',
+      label: 'Confounding Variable: Good time management drives both sleep and grades.',
+      isCorrect: true,
+      explanation: 'Correct! Time management acts as a third factor influencing both outcomes.',
+    },
+    {
+      id: '3',
+      label: 'Reverse Causality: Better grades make students feel relaxed enough to sleep.',
+      isCorrect: false,
+      explanation: 'Possible, but confounding behavior is the primary analytical flaw highlighted here.',
+    },
+  ],
+  verdictSummary: 'Correlation does not imply causation. Third variables like time management often explain parallel positive outcomes.',
 };
 
 export default function CausalCourtScreen() {
-  const router = useRouter();
+  const [stage, setStage] = useState<GameStage>('LANDING');
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
-const params = useLocalSearchParams();
-
-const caseIndex = Number(params.caseIndex ?? 0);
-
-const caseData: CausalCourtCase =
-  causalCourtCases[caseIndex] ?? causalCourtCases[0];
-  const [introVisible, setIntroVisible] = useState(true);
-  const [evidenceExamined, setEvidenceExamined] =
-    useState(false);
-
-  const introOpacity = useSharedValue(1);
-  const introY = useSharedValue(0);
-
-  const caseOpacity = useSharedValue(0);
-  const caseY = useSharedValue(25);
-
-  useEffect(() => {
-    if (!introVisible) {
-      caseOpacity.value = withTiming(1, {
-        duration: 450,
-        easing: Easing.out(Easing.cubic),
-      });
-
-      caseY.value = withTiming(0, {
-        duration: 450,
-        easing: Easing.out(Easing.cubic),
-      });
-    }
-  }, [introVisible]);
-
-  const introStyle = useAnimatedStyle(() => ({
-    opacity: introOpacity.value,
-    transform: [
-      {
-        translateY: introY.value,
-      },
-    ],
-  }));
-
-  const caseStyle = useAnimatedStyle(() => ({
-    opacity: caseOpacity.value,
-    transform: [
-      {
-        translateY: caseY.value,
-      },
-    ],
-  }));
-
-  const enterCourt = () => {
-    introOpacity.value = withTiming(0, {
-      duration: 250,
-    });
-
-    introY.value = withTiming(-15, {
-      duration: 250,
-    });
-
-    setTimeout(() => {
-      setIntroVisible(false);
-    }, 250);
+  const handleOptionSelect = (id: string) => {
+    setSelectedOption(id);
   };
 
-  const examineEvidence = () => {
-    setEvidenceExamined(true);
+  const resetGame = () => {
+    setStage('LANDING');
+    setSelectedOption(null);
   };
+
+  // -------------------------------------------------------------
+  // STAGE 0: LANDING
+  // -------------------------------------------------------------
+  if (stage === 'LANDING') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          
+          {/* Top Bar Navigation */}
+          <View style={styles.topBar}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.topBtn}>
+              <Text style={styles.topBtnText}>← BACK</Text>
+            </TouchableOpacity>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>MODULE 05</Text>
+            </View>
+          </View>
+
+          {/* Title Banner */}
+          <View style={styles.titleBanner}>
+            <View style={styles.avatarCircle}>
+              <Text style={styles.avatarEmoji}>🙂</Text>
+            </View>
+            <Text style={styles.titleText}>CAUSAL COURT</Text>
+            <Text style={styles.subtitleText}>CORRELATION VS. CAUSATION DETECTOR</Text>
+          </View>
+
+          {/* System Prompt Card */}
+          <View style={styles.creamCard}>
+            <Text style={styles.quoteText}>
+              "{MOCK_CASE.headline}"
+            </Text>
+            <Text style={styles.bodyText}>
+              🧐 {MOCK_CASE.premise}
+            </Text>
+            <Text style={styles.bodyHighlight}>
+              Let's engage critically. Flex your causation skills. 🧠⚖️
+            </Text>
+          </View>
+
+          {/* Landing Footer / Action Header */}
+          <View style={styles.centerPrompt}>
+            <Text style={styles.promptTitle}>Ready to take the bench?</Text>
+            <Text style={styles.promptSub}>Here's your first case.</Text>
+          </View>
+
+          {/* Primary Action Button */}
+          <TouchableOpacity
+            style={styles.primaryBtn}
+            onPress={() => setStage('CASE_PRESENTATION')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.primaryBtnText}>ENTER THE COURT ⚖️</Text>
+          </TouchableOpacity>
+
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // -------------------------------------------------------------
+  // STAGE 1: CASE PRESENTATION
+  // -------------------------------------------------------------
+  if (stage === 'CASE_PRESENTATION') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          
+          <View style={styles.topBar}>
+            <TouchableOpacity onPress={() => setStage('LANDING')} style={styles.topBtn}>
+              <Text style={styles.topBtnText}>← BACK</Text>
+            </TouchableOpacity>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>CASE #101</Text>
+            </View>
+          </View>
+
+          <View style={styles.titleBanner}>
+            <Text style={styles.titleText}>THE EVIDENCE</Text>
+            <Text style={styles.subtitleText}>EXAMINE THE CLAIM</Text>
+          </View>
+
+          <View style={styles.creamCard}>
+            <Text style={styles.cardHeaderLabel}>► EXHIBIT A: HEADLINE</Text>
+            <Text style={styles.quoteText}>{MOCK_CASE.headline}</Text>
+          </View>
+
+          <View style={styles.missionCard}>
+            <Text style={styles.missionTitle}>[ COURT MANDATE ]</Text>
+            <Text style={styles.missionItem}>■ Separate logical jump from underlying data</Text>
+            <Text style={styles.missionItem}>■ Identify potential confounding factors</Text>
+            <Text style={styles.missionItem}>■ Deliver an evidence-backed ruling</Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.primaryBtn}
+            onPress={() => setStage('ANALYSIS')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.primaryBtnText}>DELIBERATE CASE 🔍</Text>
+          </TouchableOpacity>
+
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // -------------------------------------------------------------
+  // STAGE 2: ANALYSIS
+  // -------------------------------------------------------------
+  if (stage === 'ANALYSIS') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          
+          <View style={styles.topBar}>
+            <TouchableOpacity onPress={() => setStage('CASE_PRESENTATION')} style={styles.topBtn}>
+              <Text style={styles.topBtnText}>← EVIDENCE</Text>
+            </TouchableOpacity>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>DELIBERATION</Text>
+            </View>
+          </View>
+
+          <View style={styles.titleBanner}>
+            <Text style={styles.titleText}>CHOOSE RULING</Text>
+            <Text style={styles.subtitleText}>WHAT BEST EXPLAINS THIS CORRELATION?</Text>
+          </View>
+
+          <View style={styles.optionsContainer}>
+            {MOCK_CASE.options.map((option) => {
+              const isSelected = selectedOption === option.id;
+              return (
+                <TouchableOpacity
+                  key={option.id}
+                  style={[styles.optionCard, isSelected && styles.optionCardSelected]}
+                  onPress={() => handleOptionSelect(option.id)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <TouchableOpacity
+            style={[styles.primaryBtn, !selectedOption && styles.btnDisabled]}
+            disabled={!selectedOption}
+            onPress={() => setStage('VERDICT')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.primaryBtnText}>
+              {selectedOption ? 'SUBMIT VERDICT 🔨' : 'SELECT AN ARGUMENT'}
+            </Text>
+          </TouchableOpacity>
+
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // -------------------------------------------------------------
+  // STAGE 3: VERDICT
+  // -------------------------------------------------------------
+  const chosenOption = MOCK_CASE.options.find((opt) => opt.id === selectedOption);
 
   return (
-    <View style={styles.container}>
-      {/* ==========================================
-          COURTROOM BACKGROUND
-      ========================================== */}
-
-      <View style={styles.backgroundScene}>
-        <View style={styles.wall} />
-
-        <View style={styles.wallPanelLeft} />
-        <View style={styles.wallPanelRight} />
-
-        <View style={styles.window}>
-          <View style={styles.windowCrossVertical} />
-          <View style={styles.windowCrossHorizontal} />
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        
+        <View style={styles.topBar}>
+          <TouchableOpacity onPress={() => setStage('ANALYSIS')} style={styles.topBtn}>
+            <Text style={styles.topBtnText}>← OPTIONS</Text>
+          </TouchableOpacity>
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>RULING</Text>
+          </View>
         </View>
 
-        <View style={styles.bench}>
-          <View style={styles.benchTop} />
-          <View style={styles.benchBody} />
+        <View style={styles.titleBanner}>
+          <Text style={styles.titleText}>COURT VERDICT</Text>
+          <Text style={styles.subtitleText}>ANALYSIS OVERVIEW</Text>
         </View>
 
-        <View style={styles.gavel}>
-          <View style={styles.gavelHead} />
-          <View style={styles.gavelHandle} />
+        <View style={styles.creamCard}>
+          <Text style={styles.cardHeaderLabel}>
+            {chosenOption?.isCorrect ? '► RULING SUSTAINED' : '► RULING OVERRULED'}
+          </Text>
+          <Text style={styles.quoteText}>{chosenOption?.label}</Text>
+          <Text style={[styles.bodyText, { marginTop: 12 }]}>
+            {chosenOption?.explanation}
+          </Text>
         </View>
 
-        <View style={styles.scales}>
-          <View style={styles.scalePole} />
-          <View style={styles.scaleBeam} />
-
-          <View style={styles.scaleLeft} />
-          <View style={styles.scaleRight} />
+        <View style={styles.missionCard}>
+          <Text style={styles.missionTitle}>[ BENCH SUMMARY ]</Text>
+          <Text style={styles.missionItem}>■ {MOCK_CASE.verdictSummary}</Text>
         </View>
 
-        <View style={styles.floor} />
-      </View>
+        <TouchableOpacity
+          style={styles.primaryBtn}
+          onPress={resetGame}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.primaryBtnText}>NEXT CASE 🔄</Text>
+        </TouchableOpacity>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
-      >
-        {/* ==========================================
-            INTRO
-        ========================================== */}
-
-        {introVisible && (
-          <Animated.View
-            style={[
-              styles.introScreen,
-              introStyle,
-            ]}
-          >
-            <View style={styles.mascotLarge}>
-              <Text style={styles.mascotEyes}>
-                •ᴗ•
-              </Text>
-
-              <Text style={styles.mascotBody}>
-                ◡
-              </Text>
-            </View>
-
-            <Text style={styles.gameTitle}>
-              CAUSAL COURT
-            </Text>
-
-            <View style={styles.titleUnderline} />
-
-            <View style={styles.hookCard}>
-              <Text style={styles.hookText}>
-                "Students who sleep more get better grades!" says the study.
-              </Text>
-
-              <Text style={styles.hookText}>
-                😮 Whoa — so more sleep causes better grades?
-              </Text>
-
-              <Text style={styles.hookText}>
-                Or maybe students who manage their time well both sleep more and study smarter —
-                the headline never says which.
-              </Text>
-
-              <Text style={styles.hookText}>
-                Let's engage critically. Flex your causation skills. 🧠⚖️
-              </Text>
-            </View>
-
-            <Text style={styles.readyText}>
-              Ready to take the bench?
-            </Text>
-
-            <Text style={styles.readySubtext}>
-              Here's your first case.
-            </Text>
-
-            <Pressable
-              onPress={enterCourt}
-              style={({ pressed }) => [
-                styles.enterButton,
-                pressed && styles.buttonPressed,
-              ]}
-            >
-              <Text style={styles.enterButtonText}>
-                ENTER THE COURT
-              </Text>
-
-              <Text style={styles.enterIcon}>
-                ⚖
-              </Text>
-            </Pressable>
-          </Animated.View>
-        )}
-
-        {/* ==========================================
-            CASE
-        ========================================== */}
-
-        {!introVisible && (
-          <Animated.View
-            style={[
-              styles.caseScreen,
-              caseStyle,
-            ]}
-          >
-            {/* HEADER */}
-
-            <View style={styles.header}>
-              <Pressable
-                onPress={() => router.back()}
-                style={({ pressed }) => [
-                  styles.backButton,
-                  pressed && styles.buttonPressed,
-                ]}
-              >
-                <Text style={styles.backText}>
-                  ‹
-                </Text>
-              </Pressable>
-
-              <View style={styles.headerCenter}>
-                <Text style={styles.headerTitle}>
-                  CAUSAL COURT
-                </Text>
-
-                <View style={styles.progressTrack}>
-                  <View
-                    style={[
-                      styles.progressFill,
-                      {
-                        width: `${100 / causalCourtCases.length}%`,
-                      },
-                    ]}
-                  />
-                </View>
-
-                <Text style={styles.progressText}>
-                  CASE 01 OF {String(causalCourtCases.length).padStart(2, '0')}
-                </Text>
-              </View>
-
-              <View style={styles.xpPill}>
-                <Text style={styles.xpText}>
-                  +{caseData.xp} XP
-                </Text>
-              </View>
-            </View>
-
-            {/* CASE LABEL */}
-
-            <View style={styles.caseStamp}>
-              <Text style={styles.caseStampText}>
-                CASE 01
-              </Text>
-            </View>
-
-            {/* CLAIM */}
-
-            <View style={styles.claimCard}>
-              <Text style={styles.sectionLabel}>
-                THE CLAIM
-              </Text>
-
-              <Text style={styles.claimText}>
-                “{caseData.claim}”
-              </Text>
-            </View>
-
-            {/* STUDY */}
-
-            <View style={styles.studyCard}>
-              <View style={styles.studyHeader}>
-                <Text style={styles.sectionLabel}>
-                  THE STUDY
-                </Text>
-
-                <Text style={styles.studySource}>
-                  {caseData.evidence.source}
-                </Text>
-              </View>
-
-              <Text style={styles.studyText}>
-                {caseData.evidence.description}
-              </Text>
-
-              <View style={styles.metaRow}>
-                <View>
-                  <Text style={styles.metaLabel}>
-                    TIMEFRAME
-                  </Text>
-
-                  <Text style={styles.metaValue}>
-                    {caseData.evidence.period}
-                  </Text>
-                </View>
-
-                <View>
-                  <Text style={styles.metaLabel}>
-                    SKILL
-                  </Text>
-
-                  <Text style={styles.metaValue}>
-                    {caseData.concept}
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            {/* EVIDENCE */}
-
-            <Pressable
-              onPress={examineEvidence}
-              style={({ pressed }) => [
-                styles.examineButton,
-                evidenceExamined &&
-                  styles.examineButtonDone,
-                pressed && styles.buttonPressed,
-              ]}
-            >
-              <View style={styles.examineIcon}>
-                <Text style={styles.magnifyingGlass}>
-                  {evidenceExamined ? '✓' : '⌕'}
-                </Text>
-              </View>
-
-              <View style={styles.examineContent}>
-                <Text style={styles.examineTitle}>
-                  {evidenceExamined
-                    ? 'EVIDENCE EXAMINED'
-                    : 'EXAMINE THE EVIDENCE'}
-                </Text>
-
-                <Text style={styles.examineSubtitle}>
-                  {evidenceExamined
-                    ? 'Look closely before making your judgment.'
-                    : 'What does the study actually show?'}
-                </Text>
-              </View>
-            </Pressable>
-
-            {evidenceExamined && (
-              <View style={styles.observationCard}>
-                <Text style={styles.observationLabel}>
-                  WHAT DO YOU NOTICE?
-                </Text>
-
-                <Text style={styles.observationText}>
-                  {caseData.observation}
-                </Text>
-              </View>
-            )}
-
-            {/* VERDICT CTA */}
-
-            <View style={styles.verdictArea}>
-              <Text style={styles.verdictQuestion}>
-                Is the claim supported?
-              </Text>
-
-              <Text style={styles.verdictHint}>
-                You will choose TRUE, FALSE, or NOT ENOUGH EVIDENCE.
-              </Text>
-
-              <Pressable
-               disabled={!evidenceExamined}
-onPress={() =>
-  router.push({
-    pathname: '/games/causal-court-verdict',
-    params: {
-      caseIndex: String(caseIndex),
-    },
-  })
-}
-                style={({ pressed }) => [
-                  styles.verdictButton,
-                  !evidenceExamined &&
-                    styles.verdictButtonDisabled,
-                  pressed &&
-                    evidenceExamined &&
-                    styles.buttonPressed,
-                ]}
-              >
-                <Text style={styles.verdictButtonText}>
-                  {evidenceExamined
-                    ? 'MAKE YOUR VERDICT'
-                    : 'EXAMINE EVIDENCE FIRST'}
-                </Text>
-
-                <Text style={styles.gavelIcon}>
-                  {evidenceExamined ? '⚖' : '🔒'}
-                </Text>
-              </Pressable>
-            </View>
-          </Animated.View>
-        )}
       </ScrollView>
-
-      {/* ==========================================
-          SMALL MASCOT
-      ========================================== */}
-
-      {!introVisible && (
-        <View style={styles.mascot}>
-          <Text style={styles.mascotEyes}>
-            •ᴗ•
-          </Text>
-
-          <Text style={styles.mascotBody}>
-            ◡
-          </Text>
-        </View>
-      )}
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.forest,
+    backgroundColor: '#1E3A29', // Dark Olive Green match
   },
-
-  backgroundScene: {
-    ...StyleSheet.absoluteFillObject,
-    overflow: 'hidden',
-  },
-
-  wall: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: COLORS.forest,
-  },
-
-  wallPanelLeft: {
-    position: 'absolute',
-    top: 115,
-    left: -25,
-    width: 150,
-    height: 230,
-    backgroundColor: COLORS.forestDark,
-    borderRightWidth: 4,
-    borderColor: COLORS.walnut,
-    transform: [
-      {
-        skewY: '-3deg',
-      },
-    ],
-  },
-
-  wallPanelRight: {
-    position: 'absolute',
-    top: 115,
-    right: -25,
-    width: 150,
-    height: 230,
-    backgroundColor: COLORS.forestDark,
-    borderLeftWidth: 4,
-    borderColor: COLORS.walnut,
-    transform: [
-      {
-        skewY: '3deg',
-      },
-    ],
-  },
-
-  window: {
-    position: 'absolute',
-    top: 105,
-    left: '50%',
-    marginLeft: -42,
-    width: 84,
-    height: 110,
-    backgroundColor: '#657A68',
-    borderWidth: 4,
-    borderColor: COLORS.walnut,
-  },
-
-  windowCrossVertical: {
-    position: 'absolute',
-    left: 37,
-    top: 0,
-    width: 5,
-    height: '100%',
-    backgroundColor: COLORS.walnut,
-  },
-
-  windowCrossHorizontal: {
-    position: 'absolute',
-    top: 50,
-    left: 0,
-    width: '100%',
-    height: 5,
-    backgroundColor: COLORS.walnut,
-  },
-
-  bench: {
-    position: 'absolute',
-    top: 270,
-    left: 25,
-    right: 25,
-    height: 90,
-  },
-
-  benchTop: {
-    height: 14,
-    backgroundColor: COLORS.oak,
-    borderWidth: 3,
-    borderColor: COLORS.ink,
-  },
-
-  benchBody: {
-    flex: 1,
-    backgroundColor: COLORS.walnut,
-    borderLeftWidth: 3,
-    borderRightWidth: 3,
-    borderBottomWidth: 3,
-    borderColor: COLORS.ink,
-  },
-
-  gavel: {
-    position: 'absolute',
-    top: 225,
-    right: 62,
-    width: 70,
-    height: 55,
-  },
-
-  gavelHead: {
-    position: 'absolute',
-    top: 2,
-    left: 3,
-    width: 35,
-    height: 16,
-    backgroundColor: COLORS.oak,
-    borderWidth: 3,
-    borderColor: COLORS.ink,
-  },
-
-  gavelHandle: {
-    position: 'absolute',
-    top: 14,
-    left: 29,
-    width: 9,
-    height: 40,
-    backgroundColor: COLORS.walnut,
-    borderWidth: 2,
-    borderColor: COLORS.ink,
-    transform: [
-      {
-        rotate: '18deg',
-      },
-    ],
-  },
-
-  scales: {
-    position: 'absolute',
-    top: 150,
-    right: 40,
-    width: 80,
-    height: 75,
-  },
-
-  scalePole: {
-    position: 'absolute',
-    left: 38,
-    top: 5,
-    width: 5,
-    height: 60,
-    backgroundColor: COLORS.gold,
-  },
-
-  scaleBeam: {
-    position: 'absolute',
-    left: 10,
-    top: 10,
-    width: 60,
-    height: 4,
-    backgroundColor: COLORS.gold,
-  },
-
-  scaleLeft: {
-    position: 'absolute',
-    left: 3,
-    top: 28,
-    width: 25,
-    height: 15,
-    borderBottomWidth: 3,
-    borderLeftWidth: 2,
-    borderRightWidth: 2,
-    borderColor: COLORS.gold,
-  },
-
-  scaleRight: {
-    position: 'absolute',
-    right: 3,
-    top: 28,
-    width: 25,
-    height: 15,
-    borderBottomWidth: 3,
-    borderLeftWidth: 2,
-    borderRightWidth: 2,
-    borderColor: COLORS.gold,
-  },
-
-  floor: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 75,
-    backgroundColor: COLORS.walnut,
-    borderTopWidth: 4,
-    borderColor: COLORS.ink,
-  },
-
   content: {
-    paddingHorizontal: 20,
-    paddingTop: 22,
-    paddingBottom: 80,
-  },
-
-  /* INTRO */
-
-  introScreen: {
-    minHeight: 720,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 30,
-  },
-
-  mascotLarge: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: COLORS.parchment,
-    borderWidth: 3,
-    borderColor: COLORS.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 15,
-    shadowColor: COLORS.parchmentShadow,
-    shadowOffset: {
-      width: 0,
-      height: 5,
-    },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-  },
-
-  mascotEyes: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: COLORS.ink,
-  },
-
-  mascotBody: {
-    marginTop: -4,
-    fontSize: 17,
-    color: COLORS.walnut,
-  },
-
-  gameTitle: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: COLORS.white,
-    letterSpacing: 1,
-    textAlign: 'center',
-  },
-
-  titleUnderline: {
-    width: 70,
-    height: 4,
-    backgroundColor: COLORS.gold,
-    marginTop: 9,
-    marginBottom: 22,
-  },
-
-  hookCard: {
-    width: '100%',
-    backgroundColor: COLORS.parchment,
-    borderWidth: 3,
-    borderColor: COLORS.ink,
     padding: 18,
-    shadowColor: COLORS.parchmentShadow,
-    shadowOffset: {
-      width: 0,
-      height: 5,
-    },
-    shadowOpacity: 1,
-    shadowRadius: 0,
+    paddingBottom: 40,
   },
-
-  hookText: {
-    fontSize: 12,
-    lineHeight: 19,
-    fontWeight: '700',
-    color: COLORS.ink,
-    marginBottom: 9,
-  },
-
-  readyText: {
-    marginTop: 24,
-    fontSize: 17,
-    fontWeight: '900',
-    color: COLORS.white,
-    textAlign: 'center',
-  },
-
-  readySubtext: {
-    marginTop: 5,
-    fontSize: 11,
-    color: COLORS.parchment,
-    textAlign: 'center',
-  },
-
-  enterButton: {
-    width: '100%',
-    height: 56,
-    marginTop: 17,
-    borderRadius: 28,
-    borderWidth: 3,
-    borderColor: COLORS.ink,
-    backgroundColor: COLORS.gold,
+  topBar: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: COLORS.walnut,
-    shadowOffset: {
-      width: 0,
-      height: 5,
-    },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 5,
-  },
-
-  enterButtonText: {
-    fontSize: 12,
-    fontWeight: '900',
-    color: COLORS.ink,
-  },
-
-  enterIcon: {
-    marginLeft: 10,
-    fontSize: 18,
-    color: COLORS.walnut,
-  },
-
-  /* HEADER */
-
-  caseScreen: {
-    width: '100%',
-  },
-
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 20,
   },
-
-  backButton: {
-    width: 40,
-    height: 40,
+  topBtn: {
+    backgroundColor: '#122217',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderWidth: 1.5,
+    borderColor: '#2D4B37',
     borderRadius: 20,
-    backgroundColor: COLORS.parchment,
-    borderWidth: 2,
-    borderColor: COLORS.ink,
+  },
+  topBtnText: {
+    color: '#EFE3C3',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  badge: {
+    backgroundColor: '#D0A361',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+  },
+  badgeText: {
+    color: '#1E3A29',
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  titleBanner: {
     alignItems: 'center',
+    marginBottom: 20,
+  },
+  avatarCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#EFE3C3',
     justifyContent: 'center',
-    shadowColor: COLORS.parchmentShadow,
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-  },
-
-  backText: {
-    fontSize: 30,
-    lineHeight: 30,
-    color: COLORS.ink,
-    marginTop: -4,
-  },
-
-  buttonPressed: {
-    transform: [
-      {
-        translateY: 3,
-      },
-    ],
-  },
-
-  headerCenter: {
-    flex: 1,
     alignItems: 'center',
-    marginHorizontal: 9,
+    marginBottom: 8,
+    borderWidth: 1.5,
+    borderColor: '#3C4E42',
   },
-
-  headerTitle: {
-    fontSize: 13,
+  avatarEmoji: {
+    fontSize: 24,
+  },
+  titleText: {
+    fontSize: 28,
     fontWeight: '900',
-    color: COLORS.white,
+    color: '#EFE3C3',
     letterSpacing: 1,
+    textAlign: 'center',
   },
-
-  progressTrack: {
-    width: '80%',
-    height: 8,
-    marginTop: 6,
-    backgroundColor: COLORS.forestDark,
-    borderWidth: 2,
-    borderColor: COLORS.ink,
-  },
-
-  progressFill: {
-    height: '100%',
-    backgroundColor: COLORS.gold,
-  },
-
-  progressText: {
-    marginTop: 4,
-    fontSize: 8,
-    fontWeight: '900',
-    color: COLORS.parchment,
-  },
-
-  xpPill: {
-    height: 30,
-    paddingHorizontal: 9,
-    borderRadius: 15,
-    backgroundColor: COLORS.gold,
-    borderWidth: 2,
-    borderColor: COLORS.ink,
-    justifyContent: 'center',
-  },
-
-  xpText: {
-    fontSize: 9,
-    fontWeight: '900',
-    color: COLORS.ink,
-  },
-
-  caseStamp: {
-    alignSelf: 'center',
-    paddingHorizontal: 15,
-    paddingVertical: 7,
-    backgroundColor: COLORS.parchment,
-    borderWidth: 2,
-    borderColor: COLORS.ink,
-    transform: [
-      {
-        rotate: '-2deg',
-      },
-    ],
-    marginBottom: 14,
-  },
-
-  caseStampText: {
-    fontSize: 10,
-    fontWeight: '900',
-    color: COLORS.ink,
+  subtitleText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#8A9E90',
     letterSpacing: 1,
+    marginTop: 2,
+    textAlign: 'center',
   },
 
-  /* CLAIM */
-
-  claimCard: {
-    backgroundColor: COLORS.parchment,
-    borderWidth: 3,
-    borderColor: COLORS.ink,
-    padding: 18,
-    shadowColor: COLORS.parchmentShadow,
-    shadowOffset: {
-      width: 0,
-      height: 5,
-    },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    marginBottom: 14,
+  /* --- CREAM CARD --- */
+  creamCard: {
+    backgroundColor: '#F3EDDA',
+    padding: 20,
+    marginBottom: 16,
+    borderRadius: 20,
   },
-
-  sectionLabel: {
-    fontSize: 9,
+  cardHeaderLabel: {
+    color: '#8B5B28',
+    fontSize: 11,
     fontWeight: '900',
-    color: COLORS.walnut,
     letterSpacing: 1,
-    marginBottom: 7,
+    marginBottom: 8,
   },
-
-  claimText: {
+  quoteText: {
+    color: '#1E3A29',
     fontSize: 18,
+    fontWeight: '800',
     lineHeight: 26,
-    fontWeight: '900',
-    color: COLORS.ink,
+    marginBottom: 12,
   },
-
-  /* STUDY */
-
-  studyCard: {
-    backgroundColor: COLORS.parchmentLight,
-    borderWidth: 2,
-    borderColor: COLORS.ink,
-    padding: 16,
-    marginBottom: 13,
-  },
-
-  studyHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    marginBottom: 4,
-  },
-
-  studySource: {
-    maxWidth: '48%',
-    fontSize: 8,
-    lineHeight: 12,
-    color: COLORS.walnut,
+  bodyHighlight: {
+    color: '#1E3A29',
+    fontSize: 14,
     fontWeight: '800',
-    textAlign: 'right',
+    lineHeight: 20,
+    marginTop: 6,
   },
-
-  studyText: {
-    fontSize: 11,
-    lineHeight: 18,
-    color: COLORS.ink,
+  bodyText: {
+    color: '#3C4E42',
+    fontSize: 13.5,
     fontWeight: '600',
+    lineHeight: 20,
+    marginBottom: 8,
   },
 
-  metaRow: {
-    flexDirection: 'row',
-    gap: 30,
-    marginTop: 14,
-    paddingTop: 11,
-    borderTopWidth: 2,
-    borderTopColor: COLORS.parchmentShadow,
+  /* --- MISSION CARD --- */
+  missionCard: {
+    backgroundColor: '#122217',
+    borderWidth: 1.5,
+    borderColor: '#2D4B37',
+    padding: 20,
+    marginBottom: 20,
+    borderRadius: 20,
   },
-
-  metaLabel: {
-    fontSize: 8,
+  missionTitle: {
+    color: '#D0A361',
+    fontSize: 12,
     fontWeight: '900',
-    color: COLORS.walnut,
+    letterSpacing: 1,
+    marginBottom: 10,
   },
-
-  metaValue: {
-    marginTop: 3,
-    fontSize: 9,
-    fontWeight: '800',
-    color: COLORS.ink,
-  },
-
-  /* EXAMINE */
-
-  examineButton: {
-    minHeight: 63,
-    borderRadius: 31,
-    borderWidth: 3,
-    borderColor: COLORS.ink,
-    backgroundColor: COLORS.parchment,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 15,
-
-    shadowColor: COLORS.parchmentShadow,
-    shadowOffset: {
-      width: 0,
-      height: 5,
-    },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 5,
-  },
-
-  examineButtonDone: {
-    backgroundColor: '#B4C4A5',
-  },
-
-  examineIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: COLORS.gold,
-    borderWidth: 2,
-    borderColor: COLORS.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 11,
-  },
-
-  magnifyingGlass: {
-    fontSize: 21,
-    fontWeight: '900',
-    color: COLORS.ink,
-  },
-
-  examineContent: {
-    flex: 1,
-  },
-
-  examineTitle: {
-    fontSize: 10,
-    fontWeight: '900',
-    color: COLORS.ink,
-    letterSpacing: 0.5,
-  },
-
-  examineSubtitle: {
-    marginTop: 3,
-    fontSize: 9,
-    lineHeight: 13,
-    color: COLORS.walnut,
-  },
-
-  observationCard: {
-    marginTop: 12,
-    backgroundColor: COLORS.parchment,
-    borderWidth: 2,
-    borderColor: COLORS.parchmentShadow,
-    padding: 14,
-  },
-
-  observationLabel: {
-    fontSize: 8,
-    fontWeight: '900',
-    color: COLORS.walnut,
-    letterSpacing: 0.7,
-    marginBottom: 5,
-  },
-
-  observationText: {
-    fontSize: 10,
-    lineHeight: 16,
+  missionItem: {
+    color: '#8A9E90',
+    fontSize: 13,
     fontWeight: '700',
-    color: COLORS.ink,
+    lineHeight: 22,
   },
 
-  /* VERDICT */
-
-  verdictArea: {
-    marginTop: 24,
+  /* --- FOOTER PROMPT --- */
+  centerPrompt: {
     alignItems: 'center',
+    marginVertical: 10,
   },
-
-  verdictQuestion: {
-    fontSize: 15,
+  promptTitle: {
+    color: '#EFE3C3',
+    fontSize: 16,
     fontWeight: '900',
-    color: COLORS.white,
-    textAlign: 'center',
+  },
+  promptSub: {
+    color: '#8A9E90',
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: 2,
   },
 
-  verdictHint: {
-    marginTop: 5,
-    fontSize: 9,
-    lineHeight: 14,
-    color: COLORS.parchment,
-    textAlign: 'center',
+  /* --- OPTIONS STYLING --- */
+  optionsContainer: {
+    marginBottom: 16,
+  },
+  optionCard: {
+    backgroundColor: '#F3EDDA',
+    padding: 18,
+    borderRadius: 16,
+    marginBottom: 12,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+  },
+  optionCardSelected: {
+    backgroundColor: '#D0A361',
+    borderColor: '#8B5B28',
+  },
+  optionText: {
+    color: '#1E3A29',
+    fontSize: 13.5,
+    fontWeight: '700',
+    lineHeight: 20,
+  },
+  optionTextSelected: {
+    color: '#1E3A29',
+    fontWeight: '900',
   },
 
-  verdictButton: {
-    width: '100%',
-    height: 56,
-    marginTop: 13,
+  /* --- PRIMARY BUTTON --- */
+  primaryBtn: {
+    backgroundColor: '#D0A361',
+    paddingVertical: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: 28,
-    borderWidth: 3,
-    borderColor: COLORS.ink,
-    backgroundColor: COLORS.gold,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: COLORS.walnut,
-    shadowOffset: {
-      width: 0,
-      height: 5,
-    },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 5,
+    marginTop: 4,
   },
-
-  verdictButtonDisabled: {
-    backgroundColor: COLORS.parchmentShadow,
-    opacity: 0.7,
+  btnDisabled: {
+    backgroundColor: '#3C4E42',
+    opacity: 0.6,
   },
-
-  verdictButtonText: {
-    fontSize: 11,
+  primaryBtnText: {
+    color: '#1E3A29',
+    fontSize: 14,
     fontWeight: '900',
-    color: COLORS.ink,
-  },
-
-  gavelIcon: {
-    marginLeft: 10,
-    fontSize: 17,
-    color: COLORS.walnut,
-  },
-
-  mascot: {
-    position: 'absolute',
-    right: 12,
-    bottom: 16,
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: COLORS.parchment,
-    borderWidth: 2,
-    borderColor: COLORS.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: COLORS.parchmentShadow,
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 1,
-    shadowRadius: 0,
+    letterSpacing: 1.5,
   },
 });

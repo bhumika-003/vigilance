@@ -59,7 +59,7 @@ export default function GamesHubScreen() {
           <TouchableOpacity
             key={game.id}
             style={[styles.card, { borderColor: game.color + '33' }]}
-            onPress={() => router.push(`/${game.id}` as any)}
+            onPress={() => router.push(`/games/${game.id}` as any)}
             activeOpacity={0.7}
           >
             <View style={styles.cardHeader}>
