@@ -1,138 +1,323 @@
-import { Animated, View, Text, StyleSheet, Dimensions } from 'react-native'
+import {
+  View,
+  Text,
+  StyleSheet,
+  Animated,
+} from 'react-native'
 import { useEffect, useRef } from 'react'
-import { scaleFontSize } from '../utils/responsive'
+import {
+  scaleFontSize,
+  scaleSpacing,
+} from '../utils/responsive'
 
 type ImpactBeatProps = {
-  active: boolean
-  label: string
-  color: string
-  intensity: 'sharp' | 'weak'
+  text: string
   onComplete?: () => void
 }
 
-const styles = StyleSheet.create({
-  beatRoot: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 50,
-  },
-  flash: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  textWrap: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1,
-  },
-  text: {
-    fontSize: scaleFontSize(28),
-    fontWeight: 'bold',
-    color: '#fff',
-    textShadowColor: 'rgba(0, 0, 0, 0.8)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-  },
-})
+export function ImpactBeat({
+  text,
+  onComplete,
+}: ImpactBeatProps) {
+  const scale = useRef(new Animated.Value(0.4)).current
+  const opacity = useRef(new Animated.Value(0)).current
+  const translateX = useRef(new Animated.Value(0)).current
+  const translateY = useRef(new Animated.Value(20)).current
+  const flashOpacity = useRef(new Animated.Value(0)).current
 
-export function ImpactBeat({ active, label, color, intensity, onComplete }: ImpactBeatProps) {
-  const opacityAnim = useRef(new Animated.Value(0)).current
-  const scaleAnim = useRef(new Animated.Value(0.2)).current
-  const rotateAnim = useRef(new Animated.Value(-8)).current
-  const shakeAnim = useRef(new Animated.Value(0)).current
+  const getFeedbackType = () => {
+    const message = text.toLowerCase()
+
+    if (
+      message.includes('sharp') ||
+      message.includes('correct') ||
+      message.includes('weak')
+    ) {
+      return 'success'
+    }
+
+    if (
+      message.includes('miss') ||
+      message.includes('wrong') ||
+      message.includes('fail')
+    ) {
+      return 'failure'
+    }
+
+    if (
+      message.includes('contradiction') ||
+      message.includes('defensive') ||
+      message.includes('pressure')
+    ) {
+      return 'warning'
+    }
+
+    return 'neutral'
+  }
+
+  const feedbackType = getFeedbackType()
+
+  const config = {
+    success: {
+      label: '✓',
+      title: text.toUpperCase(),
+      subtitle: 'TACTICAL ADVANTAGE GAINED',
+    },
+
+    failure: {
+      label: '✕',
+      title: text.toUpperCase(),
+      subtitle: 'THE LEAD HAS GONE COLD',
+    },
+
+    warning: {
+      label: '!',
+      title: text.toUpperCase(),
+      subtitle: 'WITNESS RESPONSE CHANGED',
+    },
+
+    neutral: {
+      label: '•',
+      title: text.toUpperCase(),
+      subtitle: 'NEW INFORMATION RECEIVED',
+    },
+  }[feedbackType]
 
   useEffect(() => {
-    if (active) {
-      Animated.sequence([
-        Animated.parallel([
-          Animated.timing(opacityAnim, {
-            toValue: 1,
-            duration: 200,
-            useNativeDriver: true,
-          }),
-          Animated.timing(scaleAnim, {
-            toValue: 1.25,
-            duration: 400,
-            useNativeDriver: true,
-          }),
-          Animated.timing(rotateAnim, {
-            toValue: 0,
-            duration: 400,
-            useNativeDriver: true,
-          }),
-        ]),
-        Animated.sequence([
-          Animated.timing(scaleAnim, {
-            toValue: 1,
-            duration: 300,
-            useNativeDriver: true,
-          }),
-          Animated.timing(shakeAnim, {
-            toValue: 8,
-            duration: 100,
-            useNativeDriver: true,
-          }),
-          Animated.timing(shakeAnim, {
-            toValue: -6,
-            duration: 100,
-            useNativeDriver: true,
-          }),
-          Animated.timing(shakeAnim, {
-            toValue: 6,
-            duration: 100,
-            useNativeDriver: true,
-          }),
-          Animated.timing(shakeAnim, {
-            toValue: 0,
-            duration: 100,
-            useNativeDriver: true,
-          }),
-        ]),
-        Animated.timing(opacityAnim, {
-          toValue: 0,
-          duration: 300,
+    scale.setValue(0.4)
+    opacity.setValue(0)
+    translateX.setValue(0)
+    translateY.setValue(20)
+    flashOpacity.setValue(0)
+
+    const shake = Animated.sequence([
+      Animated.timing(translateX, {
+        toValue: -10,
+        duration: 45,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateX, {
+        toValue: 10,
+        duration: 45,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateX, {
+        toValue: -6,
+        duration: 45,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateX, {
+        toValue: 6,
+        duration: 45,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateX, {
+        toValue: 0,
+        duration: 45,
+        useNativeDriver: true,
+      }),
+    ])
+
+    Animated.sequence([
+      Animated.parallel([
+        Animated.spring(scale, {
+          toValue: 1,
+          friction: 5,
+          tension: 100,
           useNativeDriver: true,
         }),
-      ]).start(() => onComplete?.())
-    }
-  }, [active])
 
-  if (!active) return null
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 120,
+          useNativeDriver: true,
+        }),
 
-  const rotateInterpolation = rotateAnim.interpolate({
-    inputRange: [-8, 0],
-    outputRange: ['-8deg', '0deg'],
-  })
+        Animated.timing(translateY, {
+          toValue: 0,
+          duration: 180,
+          useNativeDriver: true,
+        }),
+
+        Animated.sequence([
+          Animated.timing(flashOpacity, {
+            toValue: 0.45,
+            duration: 80,
+            useNativeDriver: true,
+          }),
+
+          Animated.timing(flashOpacity, {
+            toValue: 0,
+            duration: 220,
+            useNativeDriver: true,
+          }),
+        ]),
+      ]),
+
+      shake,
+
+      Animated.delay(700),
+
+      Animated.parallel([
+        Animated.timing(scale, {
+          toValue: 1.15,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start(() => {
+      onComplete?.()
+    })
+  }, [text])
 
   return (
-    <Animated.View style={[styles.beatRoot, { opacity: opacityAnim }]}>
+    <View pointerEvents="none" style={styles.container}>
+      {/* Screen flash */}
       <Animated.View
         style={[
           styles.flash,
-          {
-            backgroundColor: color,
-            opacity: intensity === 'sharp' ? opacityAnim : opacityAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [0, 0.4],
-            }),
-          },
+          { opacity: flashOpacity },
         ]}
       />
 
+      {/* Tactical feedback */}
       <Animated.View
         style={[
-          styles.textWrap,
+          styles.feedbackBox,
           {
+            opacity,
             transform: [
-              { scale: scaleAnim },
-              { rotate: rotateInterpolation },
-              { translateX: shakeAnim },
+              { translateX },
+              { translateY },
+              { scale },
             ],
           },
         ]}
       >
-        <Text style={styles.text}>{label}</Text>
+        <View
+          style={[
+            styles.iconBox,
+            feedbackType === 'success' && styles.successBox,
+            feedbackType === 'failure' && styles.failureBox,
+            feedbackType === 'warning' && styles.warningBox,
+          ]}
+        >
+          <Text style={styles.icon}>
+            {config.label}
+          </Text>
+        </View>
+
+        <View style={styles.messageContent}>
+          <Text style={styles.title}>
+            {config.title}
+          </Text>
+
+          <Text style={styles.subtitle}>
+            {config.subtitle}
+          </Text>
+        </View>
       </Animated.View>
-    </Animated.View>
+    </View>
   )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  flash: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#f2e8c9',
+  },
+
+  feedbackBox: {
+    width: '82%',
+    minHeight: 80,
+
+    flexDirection: 'row',
+    alignItems: 'center',
+
+    backgroundColor: '#17191d',
+
+    borderWidth: 4,
+    borderColor: '#050505',
+
+    padding: scaleSpacing(10),
+
+    shadowColor: '#000',
+    shadowOpacity: 0.9,
+    shadowRadius: 10,
+    elevation: 20,
+  },
+
+  iconBox: {
+    width: 54,
+    height: 54,
+
+    alignItems: 'center',
+    justifyContent: 'center',
+
+    backgroundColor: '#3f4650',
+
+    borderWidth: 3,
+    borderColor: '#090909',
+
+    marginRight: scaleSpacing(10),
+  },
+
+  successBox: {
+    backgroundColor: '#3f7d5d',
+  },
+
+  failureBox: {
+    backgroundColor: '#8a4242',
+  },
+
+  warningBox: {
+    backgroundColor: '#9a7535',
+  },
+
+  icon: {
+    color: '#f5eed9',
+
+    fontSize: scaleFontSize(28),
+
+    fontWeight: '900',
+  },
+
+  messageContent: {
+    flex: 1,
+  },
+
+  title: {
+    color: '#f5eed9',
+
+    fontSize: scaleFontSize(16),
+
+    fontWeight: '900',
+
+    letterSpacing: 1,
+  },
+
+  subtitle: {
+    color: '#9fa6ad',
+
+    fontSize: scaleFontSize(9),
+
+    fontWeight: 'bold',
+
+    marginTop: 4,
+
+    letterSpacing: 0.8,
+  },
+})
