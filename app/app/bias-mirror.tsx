@@ -9,140 +9,177 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 
-interface CaseStudy {
+type GameStage = 'LANDING' | 'SET_LENS' | 'SEE_MIRROR' | 'SPOT_ENGINEERING' | 'REVEAL_BIAS';
+
+interface LensOption {
   id: string;
-  topic: string;
-  headlineA: string;
-  headlineB: string;
-  biasType: string;
-  explanation: string;
-  correctAnswer: 'A' | 'B';
+  category: string;
+  label: string;
+  icon: string;
 }
 
-const CASES: CaseStudy[] = [
-  {
-    id: '1',
-    topic: 'TECHNOLOGY & AUTOMATION',
-    headlineA: 'AI Breakthrough Promises Massive Boost to Global Economic Productivity',
-    headlineB: 'Disruptive AI Automation Threatens Millions of Traditional Jobs Worldwide',
-    biasType: 'SENSATIONALISM VS OPTIMISM',
-    explanation: 'Headline B framing focuses heavily on economic anxiety and fear triggers, while Headline A emphasizes growth metrics.',
-    correctAnswer: 'B',
-  },
-  {
-    id: '2',
-    topic: 'PUBLIC HEALTH DATA',
-    headlineA: 'New Dietary Guidelines Recommended by Leading National Researchers',
-    headlineB: 'Experts Warn Popular Diet Could Secretly Increase Long-Term Health Risks',
-    biasType: 'FEAR-BASED FRAMING',
-    explanation: 'Headline B uses alarmist language ("Secretly Increase Risks") designed to provoke immediate user panic.',
-    correctAnswer: 'B',
-  },
+const LENS_OPTIONS: LensOption[] = [
+  { id: '1', category: 'TECH', label: 'AI & Automation', icon: '🤖' },
+  { id: '2', category: 'HEALTH', label: 'Wellness & Diets', icon: '🥗' },
+  { id: '3', category: 'CLIMATE', label: 'Clean Energy', icon: '⚡' },
+  { id: '4', category: 'WORK', label: 'Remote Work', icon: '💻' },
+  { id: '5', category: 'FINANCE', label: 'Crypto & Markets', icon: '📈' },
+  { id: '6', category: 'MEDIA', label: 'Social Networks', icon: '📱' },
 ];
 
 export default function BiasMirrorScreen() {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedOption, setSelectedOption] = useState<'A' | 'B' | null>(null);
-  const [score, setScore] = useState(0);
-  const [showExplanation, setShowExplanation] = useState(false);
+  const [stage, setStage] = useState<GameStage>('LANDING');
+  const [selectedLenses, setSelectedLenses] = useState<string[]>([]);
 
-  const currentCase = CASES[currentIndex];
-
-  const handleSelect = (option: 'A' | 'B') => {
-    if (selectedOption) return; // Prevent re-selection
-    setSelectedOption(option);
-    setShowExplanation(true);
-    if (option === currentCase.correctAnswer) {
-      setScore((prev) => prev + 1);
-    }
-  };
-
-  const handleNext = () => {
-    if (currentIndex < CASES.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
-      setSelectedOption(null);
-      setShowExplanation(false);
+  const toggleLens = (id: string) => {
+    if (selectedLenses.includes(id)) {
+      setSelectedLenses((prev) => prev.filter((item) => item !== id));
     } else {
-      router.back();
+      if (selectedLenses.length < 3) {
+        setSelectedLenses((prev) => [...prev, id]);
+      }
     }
   };
 
+  // -------------------------------------------------------------
+  // STAGE 0: LANDING
+  // -------------------------------------------------------------
+  if (stage === 'LANDING') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          
+          {/* Top Bar Navigation */}
+          <View style={styles.topBar}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.topBtn}>
+              <Text style={styles.topBtnText}>← BACK</Text>
+            </TouchableOpacity>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>MODULE 04</Text>
+            </View>
+          </View>
+
+          {/* Title Banner */}
+          <View style={styles.titleBanner}>
+            <Text style={styles.titleText}>BIAS MIRROR</Text>
+            <Text style={styles.subtitleText}>CONFIRMATION BIAS DETECTOR</Text>
+          </View>
+
+          {/* System Prompt Card */}
+          <View style={styles.creamCard}>
+            <Text style={styles.cardHeaderLabel}>► SYSTEM PROMPT</Text>
+            <Text style={styles.quoteText}>
+              "That headline feels right… doesn’t it?"
+            </Text>
+          </View>
+
+          {/* Warning / Explanation Card */}
+          <View style={styles.creamCard}>
+            <Text style={styles.bodyHighlight}>
+              BUT WHAT IF IT WAS DESIGNED TO FEEL THAT WAY?
+            </Text>
+            <Text style={styles.bodyText}>
+              In <Text style={styles.inlineAccent}>BIAS MIRROR</Text>, your beliefs become the battlefield. We present headlines crafted to flatter your existing opinions.
+            </Text>
+            <Text style={styles.bodyText}>
+              Your job is to spot emotional traps, tap hidden manipulation, and catch your own bias before it catches you.
+            </Text>
+          </View>
+
+          {/* Mission Goals Card */}
+          <View style={styles.missionCard}>
+            <Text style={styles.missionTitle}>[ MISSION GOALS ]</Text>
+            <Text style={styles.missionItem}>■ Investigate deceptive wording</Text>
+            <Text style={styles.missionItem}>■ Uncover missing counter-facts</Text>
+            <Text style={styles.missionItem}>■ Upgrade your mind's defense</Text>
+          </View>
+
+          {/* Primary Action Button */}
+          <TouchableOpacity
+            style={styles.primaryBtn}
+            onPress={() => setStage('SET_LENS')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.primaryBtnText}>ENTER THE MIRROR 🪞</Text>
+          </TouchableOpacity>
+
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // -------------------------------------------------------------
+  // STAGE 1: SET YOUR LENS
+  // -------------------------------------------------------------
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
-        {/* Header */}
-        <View style={styles.topNav}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Text style={styles.backBtnText}>← BACK</Text>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        
+        {/* Top Header */}
+        <View style={styles.topBar}>
+          <TouchableOpacity onPress={() => setStage('LANDING')} style={styles.topBtn}>
+            <Text style={styles.topBtnText}>← BACK</Text>
           </TouchableOpacity>
-          <View style={styles.scoreBadge}>
-            <Text style={styles.scoreText}>SCORE: {score}/{CASES.length}</Text>
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>SELECT LENS</Text>
           </View>
         </View>
 
-        <View style={styles.categoryBadge}>
-          <Text style={styles.categoryText}>{currentCase.topic}</Text>
+        {/* Title Banner */}
+        <View style={styles.titleBanner}>
+          <Text style={styles.titleText}>SET YOUR LENS</Text>
+          <Text style={styles.subtitleText}>CHOOSE YOUR TARGET TOPICS</Text>
         </View>
 
-        <Text style={styles.title}>Bias Mirror</Text>
-        <Text style={styles.instruction}>
-          Identify which headline uses manipulative framing to trigger emotional confirmation bias.
-        </Text>
+        {/* System Box */}
+        <View style={styles.creamCard}>
+          <Text style={styles.bodyText}>
+            Select topics that match your current mindset matrix.
+          </Text>
+          <Text style={styles.systemHint}>CHOOSE 2-3 SLOTS ({selectedLenses.length}/3 READY):</Text>
+        </View>
 
-        {/* Headline A */}
+        {/* Grid Selection */}
+        <View style={styles.lensGrid}>
+          {LENS_OPTIONS.map((lens) => {
+            const isSelected = selectedLenses.includes(lens.id);
+            return (
+              <TouchableOpacity
+                key={lens.id}
+                style={[
+                  styles.lensCard,
+                  isSelected && styles.lensCardSelected,
+                ]}
+                onPress={() => toggleLens(lens.id)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.lensIcon}>{lens.icon}</Text>
+                <Text style={[styles.lensCategory, isSelected && styles.lensCategorySelected]}>
+                  {lens.category}
+                </Text>
+                <Text style={[styles.lensLabel, isSelected && styles.lensLabelSelected]}>
+                  {lens.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* Submit Button */}
         <TouchableOpacity
           style={[
-            styles.optionCard,
-            selectedOption === 'A' &&
-              (currentCase.correctAnswer === 'A'
-                ? styles.correctCard
-                : styles.incorrectCard),
+            styles.primaryBtn,
+            selectedLenses.length < 2 && styles.btnDisabled,
           ]}
-          onPress={() => handleSelect('A')}
-          disabled={selectedOption !== null}
+          disabled={selectedLenses.length < 2}
+          onPress={() => setStage('SEE_MIRROR')}
           activeOpacity={0.8}
         >
-          <Text style={styles.optionLabel}>OPTION A</Text>
-          <Text style={styles.headlineText}>"{currentCase.headlineA}"</Text>
+          <Text style={styles.primaryBtnText}>
+            {selectedLenses.length >= 2 ? 'CALIBRATE MIRROR 🪞' : 'SELECT 2+ TOPICS'}
+          </Text>
         </TouchableOpacity>
 
-        {/* Headline B */}
-        <TouchableOpacity
-          style={[
-            styles.optionCard,
-            selectedOption === 'B' &&
-              (currentCase.correctAnswer === 'B'
-                ? styles.correctCard
-                : styles.incorrectCard),
-          ]}
-          onPress={() => handleSelect('B')}
-          disabled={selectedOption !== null}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.optionLabel}>OPTION B</Text>
-          <Text style={styles.headlineText}>"{currentCase.headlineB}"</Text>
-        </TouchableOpacity>
-
-        {/* Explanation Card */}
-        {showExplanation && (
-          <View style={styles.explanationBox}>
-            <View style={styles.biasTag}>
-              <Text style={styles.biasTagText}>{currentCase.biasType}</Text>
-            </View>
-            <Text style={styles.explanationTitle}>
-              {selectedOption === currentCase.correctAnswer
-                ? 'VERDICT CORRECT'
-                : 'ANALYSIS MISSED'}
-            </Text>
-            <Text style={styles.explanationBody}>{currentCase.explanation}</Text>
-
-            <TouchableOpacity style={styles.nextBtn} onPress={handleNext}>
-              <Text style={styles.nextBtnText}>
-                {currentIndex < CASES.length - 1 ? 'NEXT SCENARIO →' : 'FINISH MODULE'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -151,146 +188,186 @@ export default function BiasMirrorScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#1B3022', // Olive Dark Green
   },
   content: {
-    padding: 20,
+    padding: 18,
+    paddingBottom: 40,
   },
-  topNav: {
+  topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
   },
-  backBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: '#1E293B',
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#334155',
+  topBtn: {
+    backgroundColor: '#122217',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderWidth: 1.5,
+    borderColor: '#2D4B37',
+    borderRadius: 20, // Soft rounded pill
   },
-  backBtnText: {
-    color: '#94A3B8',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  scoreBadge: {
-    backgroundColor: '#8B5CF620',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#8B5CF640',
-  },
-  scoreText: {
-    color: '#8B5CF6',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  categoryBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#334155',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    marginBottom: 8,
-  },
-  categoryText: {
-    color: '#94A3B8',
-    fontSize: 9,
+  topBtnText: {
+    color: '#EFE3C3',
+    fontSize: 12,
     fontWeight: '800',
     letterSpacing: 1,
   },
-  title: {
-    fontSize: 26,
+  badge: {
+    backgroundColor: '#D0A361',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20, // Soft rounded pill
+  },
+  badgeText: {
+    color: '#1B3022',
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  titleBanner: {
+    marginBottom: 20,
+  },
+  titleText: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#EFE3C3',
+    letterSpacing: 1,
+  },
+  subtitleText: {
+    fontSize: 12,
     fontWeight: '800',
-    color: '#F8FAFC',
-    letterSpacing: 0.5,
+    color: '#8A9E90',
+    letterSpacing: 1,
+    marginTop: 2,
   },
-  instruction: {
-    color: '#CBD5E1',
-    fontSize: 13,
-    lineHeight: 18,
-    marginTop: 6,
-    marginBottom: 24,
+
+  /* --- SMOOTH ROUNDED CARDS --- */
+  creamCard: {
+    backgroundColor: '#F3EDDA', // Light Beige/Cream
+    padding: 20,
+    marginBottom: 16,
+    borderRadius: 20, // Soft rounded ends
   },
-  optionCard: {
-    backgroundColor: '#1E293B',
-    borderRadius: 12,
-    padding: 18,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: '#334155',
-  },
-  correctCard: {
-    borderColor: '#10B981',
-    backgroundColor: '#10B98110',
-  },
-  incorrectCard: {
-    borderColor: '#EF4444',
-    backgroundColor: '#EF444410',
-  },
-  optionLabel: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#64748B',
+  cardHeaderLabel: {
+    color: '#8B5B28',
+    fontSize: 11,
+    fontWeight: '900',
     letterSpacing: 1,
     marginBottom: 8,
   },
-  headlineText: {
-    color: '#F8FAFC',
+  quoteText: {
+    color: '#1B3022',
+    fontSize: 20,
+    fontWeight: '800',
+    lineHeight: 28,
+  },
+  bodyHighlight: {
+    color: '#1B3022',
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '900',
     lineHeight: 22,
-  },
-  explanationBox: {
-    backgroundColor: '#1E293B',
-    borderRadius: 12,
-    padding: 18,
-    marginTop: 12,
-    borderWidth: 1,
-    borderColor: '#8B5CF640',
-  },
-  biasTag: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#8B5CF620',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
     marginBottom: 10,
   },
-  biasTagText: {
-    color: '#8B5CF6',
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 0.8,
+  bodyText: {
+    color: '#3C4E42',
+    fontSize: 13.5,
+    fontWeight: '600',
+    lineHeight: 20,
+    marginBottom: 10,
   },
-  explanationTitle: {
-    color: '#F8FAFC',
-    fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-    marginBottom: 6,
+  inlineAccent: {
+    color: '#8B5B28',
+    fontWeight: '900',
   },
-  explanationBody: {
-    color: '#94A3B8',
+  missionCard: {
+    backgroundColor: '#122217',
+    borderWidth: 1.5,
+    borderColor: '#2D4B37',
+    padding: 20,
+    marginBottom: 20,
+    borderRadius: 20, // Soft rounded ends
+  },
+  missionTitle: {
+    color: '#D0A361',
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 1,
+    marginBottom: 10,
+  },
+  missionItem: {
+    color: '#8A9E90',
     fontSize: 13,
-    lineHeight: 18,
+    fontWeight: '700',
+    lineHeight: 22,
+  },
+  systemHint: {
+    color: '#8B5B28',
+    fontSize: 11,
+    fontWeight: '900',
+    marginTop: 4,
+  },
+
+  /* --- LENS SELECTION GRID --- */
+  lensGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
     marginBottom: 16,
   },
-  nextBtn: {
-    backgroundColor: '#8B5CF6',
-    paddingVertical: 12,
-    borderRadius: 8,
+  lensCard: {
+    width: '48%',
+    backgroundColor: '#F3EDDA',
+    padding: 16,
+    marginBottom: 14,
+    borderRadius: 18, // Soft rounded corners
     alignItems: 'center',
   },
-  nextBtnText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-    fontSize: 11,
-    letterSpacing: 1,
+  lensCardSelected: {
+    backgroundColor: '#D0A361',
   },
-})
+  lensIcon: {
+    fontSize: 24,
+    marginBottom: 6,
+  },
+  lensCategory: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#8B5B28',
+    letterSpacing: 1,
+    marginBottom: 2,
+  },
+  lensCategorySelected: {
+    color: '#1B3022',
+  },
+  lensLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#1B3022',
+    textAlign: 'center',
+  },
+  lensLabelSelected: {
+    color: '#1B3022',
+  },
+
+  /* --- PRIMARY BUTTON WITH SOFT ENDS --- */
+  primaryBtn: {
+    backgroundColor: '#D0A361',
+    paddingVertical: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 28, // Smooth pill button
+    marginTop: 4,
+  },
+  btnDisabled: {
+    backgroundColor: '#3C4E42',
+    opacity: 0.6,
+  },
+  primaryBtnText: {
+    color: '#1B3022',
+    fontSize: 14,
+    fontWeight: '900',
+    letterSpacing: 1.5,
+  },
+});

@@ -9,166 +9,270 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 
-interface CausalCase {
+type GameStage = 'LANDING' | 'CASE_PRESENTATION' | 'ANALYSIS' | 'VERDICT';
+
+interface CaseOption {
   id: string;
-  dossierNumber: string;
-  claim: string;
-  correlationData: string;
-  confoundingVariable: string;
-  isTrueCausation: boolean;
-  verdictAnalysis: string;
+  label: string;
+  isCorrect: boolean;
+  explanation: string;
 }
 
-const CASES: CausalCase[] = [
-  {
-    id: '1',
-    dossierNumber: 'CASE FILE 0104-A',
-    claim: 'Ice cream consumption directly causes higher rates of sunburns during summer months.',
-    correlationData: 'Data shows a strong +0.89 correlation between weekly ice cream sales and hospital cases of sunburn.',
-    confoundingVariable: 'CONFOUNDING FACTOR: Sunlight Exposure & Temperature',
-    isTrueCausation: false,
-    verdictAnalysis: 'FALSE CAUSATION. Both variables increase due to warmer summer weather and longer sun exposure, not because ice cream causes sunburns.',
-  },
-  {
-    id: '2',
-    dossierNumber: 'CASE FILE 0104-B',
-    claim: 'Targeted antibiotic treatment eradicates bacterial infection in clinical trials.',
-    correlationData: 'Patients receiving targeted antibiotics showed a 94% reduction in bacterial load within 48 hours compared to placebos.',
-    confoundingVariable: 'CONTROLLED VARIABLE: Controlled Clinical Environment',
-    isTrueCausation: true,
-    verdictAnalysis: 'TRUE CAUSATION. Controlled double-blind trials directly isolated the biochemical mechanism behind bacterial suppression.',
-  },
-];
+interface CaseData {
+  headline: string;
+  premise: string;
+  options: CaseOption[];
+  verdictSummary: string;
+}
+
+const MOCK_CASE: CaseData = {
+  headline: '"Students who sleep more get better grades!" says the study.',
+  premise: 'Whoa — so more sleep causes better grades? Or maybe students who manage their time well both sleep more and study smarter — the headline never says which.',
+  options: [
+    {
+      id: '1',
+      label: 'Direct Causation: Sleeping directly boosts brain power.',
+      isCorrect: false,
+      explanation: 'Over-simplifies the relation without controlling for confounding variables.',
+    },
+    {
+      id: '2',
+      label: 'Confounding Variable: Good time management drives both sleep and grades.',
+      isCorrect: true,
+      explanation: 'Correct! Time management acts as a third factor influencing both outcomes.',
+    },
+    {
+      id: '3',
+      label: 'Reverse Causality: Better grades make students feel relaxed enough to sleep.',
+      isCorrect: false,
+      explanation: 'Possible, but confounding behavior is the primary analytical flaw highlighted here.',
+    },
+  ],
+  verdictSummary: 'Correlation does not imply causation. Third variables like time management often explain parallel positive outcomes.',
+};
 
 export default function CausalCourtScreen() {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [userVerdict, setUserVerdict] = useState<boolean | null>(null);
-  const [score, setScore] = useState(0);
-  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [stage, setStage] = useState<GameStage>('LANDING');
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
-  const currentCase = CASES[currentIndex];
-
-  const handleVerdict = (verdict: boolean) => {
-    if (userVerdict !== null) return;
-    setUserVerdict(verdict);
-    setShowAnalysis(true);
-    if (verdict === currentCase.isTrueCausation) {
-      setScore((prev) => prev + 1);
-    }
+  const handleOptionSelect = (id: string) => {
+    setSelectedOption(id);
   };
 
-  const handleNext = () => {
-    if (currentIndex < CASES.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
-      setUserVerdict(null);
-      setShowAnalysis(false);
-    } else {
-      router.back();
-    }
+  const resetGame = () => {
+    setStage('LANDING');
+    setSelectedOption(null);
   };
+
+  // -------------------------------------------------------------
+  // STAGE 0: LANDING
+  // -------------------------------------------------------------
+  if (stage === 'LANDING') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          
+          {/* Top Bar Navigation */}
+          <View style={styles.topBar}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.topBtn}>
+              <Text style={styles.topBtnText}>← BACK</Text>
+            </TouchableOpacity>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>MODULE 05</Text>
+            </View>
+          </View>
+
+          {/* Title Banner */}
+          <View style={styles.titleBanner}>
+            <View style={styles.avatarCircle}>
+              <Text style={styles.avatarEmoji}>🙂</Text>
+            </View>
+            <Text style={styles.titleText}>CAUSAL COURT</Text>
+            <Text style={styles.subtitleText}>CORRELATION VS. CAUSATION DETECTOR</Text>
+          </View>
+
+          {/* System Prompt Card */}
+          <View style={styles.creamCard}>
+            <Text style={styles.quoteText}>
+              "{MOCK_CASE.headline}"
+            </Text>
+            <Text style={styles.bodyText}>
+              🧐 {MOCK_CASE.premise}
+            </Text>
+            <Text style={styles.bodyHighlight}>
+              Let's engage critically. Flex your causation skills. 🧠⚖️
+            </Text>
+          </View>
+
+          {/* Landing Footer / Action Header */}
+          <View style={styles.centerPrompt}>
+            <Text style={styles.promptTitle}>Ready to take the bench?</Text>
+            <Text style={styles.promptSub}>Here's your first case.</Text>
+          </View>
+
+          {/* Primary Action Button */}
+          <TouchableOpacity
+            style={styles.primaryBtn}
+            onPress={() => setStage('CASE_PRESENTATION')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.primaryBtnText}>ENTER THE COURT ⚖️</Text>
+          </TouchableOpacity>
+
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // -------------------------------------------------------------
+  // STAGE 1: CASE PRESENTATION
+  // -------------------------------------------------------------
+  if (stage === 'CASE_PRESENTATION') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          
+          <View style={styles.topBar}>
+            <TouchableOpacity onPress={() => setStage('LANDING')} style={styles.topBtn}>
+              <Text style={styles.topBtnText}>← BACK</Text>
+            </TouchableOpacity>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>CASE #101</Text>
+            </View>
+          </View>
+
+          <View style={styles.titleBanner}>
+            <Text style={styles.titleText}>THE EVIDENCE</Text>
+            <Text style={styles.subtitleText}>EXAMINE THE CLAIM</Text>
+          </View>
+
+          <View style={styles.creamCard}>
+            <Text style={styles.cardHeaderLabel}>► EXHIBIT A: HEADLINE</Text>
+            <Text style={styles.quoteText}>{MOCK_CASE.headline}</Text>
+          </View>
+
+          <View style={styles.missionCard}>
+            <Text style={styles.missionTitle}>[ COURT MANDATE ]</Text>
+            <Text style={styles.missionItem}>■ Separate logical jump from underlying data</Text>
+            <Text style={styles.missionItem}>■ Identify potential confounding factors</Text>
+            <Text style={styles.missionItem}>■ Deliver an evidence-backed ruling</Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.primaryBtn}
+            onPress={() => setStage('ANALYSIS')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.primaryBtnText}>DELIBERATE CASE 🔍</Text>
+          </TouchableOpacity>
+
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // -------------------------------------------------------------
+  // STAGE 2: ANALYSIS
+  // -------------------------------------------------------------
+  if (stage === 'ANALYSIS') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          
+          <View style={styles.topBar}>
+            <TouchableOpacity onPress={() => setStage('CASE_PRESENTATION')} style={styles.topBtn}>
+              <Text style={styles.topBtnText}>← EVIDENCE</Text>
+            </TouchableOpacity>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>DELIBERATION</Text>
+            </View>
+          </View>
+
+          <View style={styles.titleBanner}>
+            <Text style={styles.titleText}>CHOOSE RULING</Text>
+            <Text style={styles.subtitleText}>WHAT BEST EXPLAINS THIS CORRELATION?</Text>
+          </View>
+
+          <View style={styles.optionsContainer}>
+            {MOCK_CASE.options.map((option) => {
+              const isSelected = selectedOption === option.id;
+              return (
+                <TouchableOpacity
+                  key={option.id}
+                  style={[styles.optionCard, isSelected && styles.optionCardSelected]}
+                  onPress={() => handleOptionSelect(option.id)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <TouchableOpacity
+            style={[styles.primaryBtn, !selectedOption && styles.btnDisabled]}
+            disabled={!selectedOption}
+            onPress={() => setStage('VERDICT')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.primaryBtnText}>
+              {selectedOption ? 'SUBMIT VERDICT 🔨' : 'SELECT AN ARGUMENT'}
+            </Text>
+          </TouchableOpacity>
+
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // -------------------------------------------------------------
+  // STAGE 3: VERDICT
+  // -------------------------------------------------------------
+  const chosenOption = MOCK_CASE.options.find((opt) => opt.id === selectedOption);
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
-        {/* Top Nav */}
-        <View style={styles.topNav}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Text style={styles.backBtnText}>← BACK</Text>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        
+        <View style={styles.topBar}>
+          <TouchableOpacity onPress={() => setStage('ANALYSIS')} style={styles.topBtn}>
+            <Text style={styles.topBtnText}>← OPTIONS</Text>
           </TouchableOpacity>
-          <View style={styles.scoreBadge}>
-            <Text style={styles.scoreText}>VERDICTS: {score}/{CASES.length}</Text>
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>RULING</Text>
           </View>
         </View>
 
-        {/* Dossier Tag */}
-        <View style={styles.dossierBadge}>
-          <Text style={styles.dossierText}>{currentCase.dossierNumber}</Text>
+        <View style={styles.titleBanner}>
+          <Text style={styles.titleText}>COURT VERDICT</Text>
+          <Text style={styles.subtitleText}>ANALYSIS OVERVIEW</Text>
         </View>
 
-        <Text style={styles.title}>Causal Court</Text>
-        <Text style={styles.instruction}>
-          Examine the evidence dossier and judge if the claim proves direct causation or false correlation.
-        </Text>
-
-        {/* Dossier Card */}
-        <View style={styles.dossierCard}>
-          <Text style={styles.sectionLabel}>CLAIMED RELATIONSHIP</Text>
-          <Text style={styles.claimText}>"{currentCase.claim}"</Text>
-
-          <View style={styles.divider} />
-
-          <Text style={styles.sectionLabel}>CORRELATION DATA</Text>
-          <Text style={styles.dataText}>{currentCase.correlationData}</Text>
-
-          <View style={styles.confoundingTag}>
-            <Text style={styles.confoundingText}>{currentCase.confoundingVariable}</Text>
-          </View>
+        <View style={styles.creamCard}>
+          <Text style={styles.cardHeaderLabel}>
+            {chosenOption?.isCorrect ? '► RULING SUSTAINED' : '► RULING OVERRULED'}
+          </Text>
+          <Text style={styles.quoteText}>{chosenOption?.label}</Text>
+          <Text style={[styles.bodyText, { marginTop: 12 }]}>
+            {chosenOption?.explanation}
+          </Text>
         </View>
 
-        {/* Decision Actions */}
-        {userVerdict === null && (
-          <View style={styles.actionRow}>
-            <TouchableOpacity
-              style={[styles.verdictBtn, styles.correlationBtn]}
-              onPress={() => handleVerdict(false)}
-            >
-              <Text style={styles.verdictBtnText}>FALSE CORRELATION</Text>
-            </TouchableOpacity>
+        <View style={styles.missionCard}>
+          <Text style={styles.missionTitle}>[ BENCH SUMMARY ]</Text>
+          <Text style={styles.missionItem}>■ {MOCK_CASE.verdictSummary}</Text>
+        </View>
 
-            <TouchableOpacity
-              style={[styles.verdictBtn, styles.causationBtn]}
-              onPress={() => handleVerdict(true)}
-            >
-              <Text style={styles.verdictBtnText}>PROVEN CAUSATION</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        <TouchableOpacity
+          style={styles.primaryBtn}
+          onPress={resetGame}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.primaryBtnText}>NEXT CASE 🔄</Text>
+        </TouchableOpacity>
 
-        {/* Court Analysis Modal Box */}
-        {showAnalysis && (
-          <View style={styles.analysisBox}>
-            <View
-              style={[
-                styles.verdictBadge,
-                {
-                  backgroundColor:
-                    userVerdict === currentCase.isTrueCausation
-                      ? '#10B98120'
-                      : '#EF444420',
-                  borderColor:
-                    userVerdict === currentCase.isTrueCausation
-                      ? '#10B981'
-                      : '#EF4444',
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.verdictBadgeText,
-                  {
-                    color:
-                      userVerdict === currentCase.isTrueCausation
-                        ? '#10B981'
-                        : '#EF4444',
-                  },
-                ]}
-              >
-                {userVerdict === currentCase.isTrueCausation
-                  ? 'JUDGMENT ACCURATE'
-                  : 'JUDGMENT OVERRULED'}
-              </Text>
-            </View>
-
-            <Text style={styles.analysisTitle}>JUDICIAL ANALYSIS</Text>
-            <Text style={styles.analysisBody}>{currentCase.verdictAnalysis}</Text>
-
-            <TouchableOpacity style={styles.nextBtn} onPress={handleNext}>
-              <Text style={styles.nextBtnText}>
-                {currentIndex < CASES.length - 1 ? 'NEXT CASE DOSSIER →' : 'CLOSE COURT SESSION'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -177,183 +281,198 @@ export default function CausalCourtScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#1E3A29', // Dark Olive Green match
   },
   content: {
-    padding: 20,
+    padding: 18,
+    paddingBottom: 40,
   },
-  topNav: {
+  topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
   },
-  backBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: '#1E293B',
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#334155',
+  topBtn: {
+    backgroundColor: '#122217',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderWidth: 1.5,
+    borderColor: '#2D4B37',
+    borderRadius: 20,
   },
-  backBtnText: {
-    color: '#94A3B8',
+  topBtnText: {
+    color: '#EFE3C3',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  badge: {
+    backgroundColor: '#D0A361',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+  },
+  badgeText: {
+    color: '#1E3A29',
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  titleBanner: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  avatarCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#EFE3C3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+    borderWidth: 1.5,
+    borderColor: '#3C4E42',
+  },
+  avatarEmoji: {
+    fontSize: 24,
+  },
+  titleText: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#EFE3C3',
+    letterSpacing: 1,
+    textAlign: 'center',
+  },
+  subtitleText: {
     fontSize: 11,
     fontWeight: '800',
-    letterSpacing: 0.5,
+    color: '#8A9E90',
+    letterSpacing: 1,
+    marginTop: 2,
+    textAlign: 'center',
   },
-  scoreBadge: {
-    backgroundColor: '#F59E0B20',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#F59E0B40',
+
+  /* --- CREAM CARD --- */
+  creamCard: {
+    backgroundColor: '#F3EDDA',
+    padding: 20,
+    marginBottom: 16,
+    borderRadius: 20,
   },
-  scoreText: {
-    color: '#F59E0B',
+  cardHeaderLabel: {
+    color: '#8B5B28',
     fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  dossierBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#334155',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
+    fontWeight: '900',
+    letterSpacing: 1,
     marginBottom: 8,
   },
-  dossierText: {
-    color: '#94A3B8',
-    fontSize: 9,
+  quoteText: {
+    color: '#1E3A29',
+    fontSize: 18,
     fontWeight: '800',
-    letterSpacing: 1,
+    lineHeight: 26,
+    marginBottom: 12,
   },
-  title: {
-    fontSize: 26,
+  bodyHighlight: {
+    color: '#1E3A29',
+    fontSize: 14,
     fontWeight: '800',
-    color: '#F8FAFC',
-    letterSpacing: 0.5,
-  },
-  instruction: {
-    color: '#CBD5E1',
-    fontSize: 13,
-    lineHeight: 18,
+    lineHeight: 20,
     marginTop: 6,
-    marginBottom: 20,
   },
-  dossierCard: {
-    backgroundColor: '#1E293B',
-    borderRadius: 12,
-    padding: 18,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#F59E0B40',
+  bodyText: {
+    color: '#3C4E42',
+    fontSize: 13.5,
+    fontWeight: '600',
+    lineHeight: 20,
+    marginBottom: 8,
   },
-  sectionLabel: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: '#64748B',
+
+  /* --- MISSION CARD --- */
+  missionCard: {
+    backgroundColor: '#122217',
+    borderWidth: 1.5,
+    borderColor: '#2D4B37',
+    padding: 20,
+    marginBottom: 20,
+    borderRadius: 20,
+  },
+  missionTitle: {
+    color: '#D0A361',
+    fontSize: 12,
+    fontWeight: '900',
     letterSpacing: 1,
-    marginBottom: 6,
+    marginBottom: 10,
   },
-  claimText: {
-    color: '#F8FAFC',
-    fontSize: 15,
+  missionItem: {
+    color: '#8A9E90',
+    fontSize: 13,
     fontWeight: '700',
     lineHeight: 22,
   },
-  divider: {
-    height: 1,
-    backgroundColor: '#334155',
-    marginVertical: 14,
-  },
-  dataText: {
-    color: '#CBD5E1',
-    fontSize: 13,
-    lineHeight: 18,
-    marginBottom: 12,
-  },
-  confoundingTag: {
-    backgroundColor: '#0F172A',
-    padding: 10,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#334155',
-  },
-  confoundingText: {
-    color: '#F59E0B',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  verdictBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 8,
+
+  /* --- FOOTER PROMPT --- */
+  centerPrompt: {
     alignItems: 'center',
-    justifyContent: 'center',
+    marginVertical: 10,
   },
-  correlationBtn: {
-    backgroundColor: '#EF4444',
+  promptTitle: {
+    color: '#EFE3C3',
+    fontSize: 16,
+    fontWeight: '900',
   },
-  causationBtn: {
-    backgroundColor: '#10B981',
+  promptSub: {
+    color: '#8A9E90',
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: 2,
   },
-  verdictBtnText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-  },
-  analysisBox: {
-    backgroundColor: '#1E293B',
-    borderRadius: 12,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: '#334155',
-  },
-  verdictBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    borderWidth: 1,
-    marginBottom: 12,
-  },
-  verdictBadgeText: {
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-  },
-  analysisTitle: {
-    color: '#F8FAFC',
-    fontSize: 13,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-    marginBottom: 6,
-  },
-  analysisBody: {
-    color: '#CBD5E1',
-    fontSize: 13,
-    lineHeight: 18,
+
+  /* --- OPTIONS STYLING --- */
+  optionsContainer: {
     marginBottom: 16,
   },
-  nextBtn: {
-    backgroundColor: '#F59E0B',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
+  optionCard: {
+    backgroundColor: '#F3EDDA',
+    padding: 18,
+    borderRadius: 16,
+    marginBottom: 12,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
   },
-  nextBtnText: {
-    color: '#0F172A',
-    fontWeight: '800',
-    fontSize: 11,
-    letterSpacing: 1,
+  optionCardSelected: {
+    backgroundColor: '#D0A361',
+    borderColor: '#8B5B28',
+  },
+  optionText: {
+    color: '#1E3A29',
+    fontSize: 13.5,
+    fontWeight: '700',
+    lineHeight: 20,
+  },
+  optionTextSelected: {
+    color: '#1E3A29',
+    fontWeight: '900',
+  },
+
+  /* --- PRIMARY BUTTON --- */
+  primaryBtn: {
+    backgroundColor: '#D0A361',
+    paddingVertical: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 28,
+    marginTop: 4,
+  },
+  btnDisabled: {
+    backgroundColor: '#3C4E42',
+    opacity: 0.6,
+  },
+  primaryBtnText: {
+    color: '#1E3A29',
+    fontSize: 14,
+    fontWeight: '900',
+    letterSpacing: 1.5,
   },
 });
