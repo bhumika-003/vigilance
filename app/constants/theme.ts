@@ -1,11 +1,19 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * VIGILANCE app palette: indigo / gold / coral / green
+ * Typography: Poppins (headings), Lora (body text)
  */
 
 import { Platform } from 'react-native';
 
-const tintColorLight = '#0a7ea4';
+// Your team's brand palette
+export const Palette = {
+  indigo: '#4B3FA0',   // primary brand color, buttons, active states
+  gold: '#F4B400',     // accent, highlights, streak flame
+  coral: '#FF6F59',    // danger/wrong answers, hearts lost
+  green: '#2ECC71',    // success/correct answers
+};
+
+const tintColorLight = Palette.indigo;
 const tintColorDark = '#fff';
 
 export const Colors = {
@@ -27,15 +35,19 @@ export const Colors = {
   },
 };
 
+// App-specific typography (Poppins for headings, Lora for body)
+export const AppFonts = {
+  heading: 'Poppins_700Bold',
+  headingMedium: 'Poppins_600SemiBold',
+  body: 'Lora_400Regular',
+  bodyBold: 'Lora_700Bold',
+};
+
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: 'ui-monospace',
   },
   default: {
@@ -51,3 +63,5 @@ export const Fonts = Platform.select({
     mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
   },
 });
+
+
