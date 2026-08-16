@@ -1,54 +1,31 @@
-import { AppFonts, Palette } from '@/constants/theme';
-import { Pressable, PressableProps, StyleSheet, Text } from 'react-native';
+import { Pressable, Text, StyleSheet, PressableProps } from 'react-native';
+import { Palette, AppFonts } from '@/constants/theme';
 
 type AppButtonProps = PressableProps & {
   title: string;
   variant?: 'primary' | 'secondary';
+  color?: string;
 };
 
-export function AppButton({ title, variant = 'primary', style, ...rest }: AppButtonProps) {
+export function AppButton({ title, variant = 'primary', color, style, ...rest }: AppButtonProps) {
   const isPrimary = variant === 'primary';
+  const bgColor = color ?? Palette.indigo;
 
   return (
     <Pressable
       style={({ pressed }) => [
         styles.base,
-        isPrimary ? styles.primary : styles.secondary,
+        isPrimary ? { backgroundColor: bgColor } : { backgroundColor: '#fff', borderWidth: 2, borderColor: bgColor },
         pressed && { opacity: 0.8 },
       ]}
       {...rest}
     >
-      <Text style={[styles.text, isPrimary ? styles.textPrimary : styles.textSecondary]}>
-        {title}
-      </Text>
+      <Text style={[styles.text, { color: isPrimary ? '#fff' : bgColor }]}>{title}</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  base: {
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primary: {
-    backgroundColor: Palette.indigo,
-  },
-  secondary: {
-    backgroundColor: '#fff',
-    borderWidth: 2,
-    borderColor: Palette.indigo,
-  },
-  text: {
-    fontFamily: AppFonts.headingMedium,
-    fontSize: 16,
-  },
-  textPrimary: {
-    color: '#fff',
-  },
-  textSecondary: {
-    color: Palette.indigo,
-  },
+  base: { paddingVertical: 14, paddingHorizontal: 24, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  text: { fontFamily: AppFonts.headingMedium, fontSize: 16 },
 });
